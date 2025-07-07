@@ -28,6 +28,12 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 
+# ABOUT COMPANY
+COMPANY_NAME = 'Legend of Runners'
+SLOGAN = 'Run-Run-Run'
+CONTACTS = 'soon here will be contacts'
+
+
 # Application definition
 
 INSTALLED_APPS = [
