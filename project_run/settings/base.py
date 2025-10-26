@@ -31,7 +31,7 @@ ALLOWED_HOSTS = ['*']
 # ABOUT COMPANY
 COMPANY_NAME = 'Legend of Runners'
 SLOGAN = 'Run-Run-Run'
-CONTACTS = 'soon here will be contacts'
+CONTACTS = '1600 Amphitheatre Parkway, Mountain View, California, 94043, USA'
 
 
 # Application definition
