@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from django.conf import settings
 
 from rest_framework import viewsets
+from rest_framework.views import APIView
+from rest_framework import status
+from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
 from .models import Run
 from django.contrib.auth.models import User
@@ -40,3 +43,43 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         # Иначе — все (is_superuser исключены)
 
         return queryset
+
+
+class StartRunView(APIView):
+    def post(self, request, run_id):
+        # 1. Получаем объект или 404
+        run = get_object_or_404(Run, id=run_id)
+
+        # 2. Проверяем, можно ли стартовать
+        if run.status != 'init':
+            return Response(
+                {'error': 'Невозможно запустить забег: он уже запущен или уже завершён.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 3. Меняем статус и сохраняем
+        run.status = 'in_progress'
+        run.save()
+
+        # 4. Возвращаем JSON-ответ
+        return Response({'status': run.status}, status=status.HTTP_200_OK)
+
+
+class StopRunView(APIView):
+    def post(self, request, run_id):
+        # 1. Получаем объект или 404
+        run = get_object_or_404(Run, id=run_id)
+
+        # 2. Проверяем, можно ли стартовать
+        if run.status != 'in_progress':
+            return Response(
+                {'error': 'Невозможно закончить забег: он ещё не начат или уже завершён.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 3. Меняем статус и сохраняем
+        run.status = 'finished'
+        run.save()
+
+        # 4. Возвращаем JSON-ответ
+        return Response({'status': run.status}, status=status.HTTP_200_OK)
