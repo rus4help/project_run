@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -25,14 +26,18 @@ def company_details(request):
 class RunViewSet(viewsets.ModelViewSet):
     queryset = Run.objects.all().select_related('athlete')
     serializer_class = RunSerializer
-    filter_backends = [DjangoFilterBackend]  # Указываем какой класс будет использоваться для фильтра
+    filter_backends = [DjangoFilterBackend, OrderingFilter]  # Указываем какой класс будет использоваться для фильтра
     filterset_fields = ['status', 'athlete']  # Поля, по которым будет происходить фильтрация
+    ordering_fields = ['created_at']  # Поля по которым будет возможна сортировка
+    ordering = ['created_at'] # Сортировка по умолчанию, если на будущее в ordering_fields будет добавлено больше полей
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.none()
     serializer_class = UserSerializer
-    filter_backends = [SearchFilter]  # Подключаем SearchFilter здесь
+    filter_backends = [SearchFilter, OrderingFilter]  # Подключаем SearchFilter здесь
     search_fields = ['first_name', 'last_name']  # Указываем поля по которым будет вестись поиск
+    ordering_fields = ['date_joined']
+    ordering = ['date_joined']
 
     def get_queryset(self):
         # Исключаем суперпользователей
