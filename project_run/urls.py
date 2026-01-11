@@ -15,7 +15,7 @@ urlpatterns = [
     path('api/company_details/', company_details),
     path('api/runs/<int:run_id>/start/', StartRunView.as_view()),
     path('api/runs/<int:run_id>/stop/', StopRunView.as_view()),
-    path('api/athlete_info/{user_id}/', AthleteInfoView.as_view()),
+    path('api/athlete_info/<int:user_id>/', AthleteInfoView.as_view()),
     path('', include(router.urls))
 ]
 
