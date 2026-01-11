@@ -115,14 +115,14 @@ class AthleteInfoView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, user_id):
-        # 1. Проверяем, существует ли пользователь
         user = get_object_or_404(User, id=user_id)
-
-        # 2. Получаем или создаём AthleteInfo для этого пользователя
         athlete_info, created = AthleteInfo.objects.get_or_create(user=user)
 
-        # 3. Сериализуем данные
-        serializer = AthleteInfoSerializer(athlete_info)
+        # Передаём И входящие данные, И существующий объект
+        serializer = AthleteInfoSerializer(athlete_info, data=request.data)
 
-        # 4. Возвращаем с 200 OK (даже если создали запись)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if serializer.is_valid():
+            serializer.save()  # ← это обновит запись в БД
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
