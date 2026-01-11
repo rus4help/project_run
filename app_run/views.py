@@ -1,6 +1,8 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
+from rest_framework.pagination import PageNumberPagination
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.conf import settings
@@ -22,6 +24,9 @@ def company_details(request):
                'contacts': settings.CONTACTS}
     return Response(details)
 
+class RunAndUserPagination(PageNumberPagination):
+    page_size_query_param = 'size'  # Разрешаем изменять количество объектов через query параметр size в url
+
 
 class RunViewSet(viewsets.ModelViewSet):
     queryset = Run.objects.all().select_related('athlete')
@@ -30,6 +35,7 @@ class RunViewSet(viewsets.ModelViewSet):
     filterset_fields = ['status', 'athlete']  # Поля, по которым будет происходить фильтрация
     ordering_fields = ['created_at']  # Поля по которым будет возможна сортировка
     ordering = ['created_at'] # Сортировка по умолчанию, если на будущее в ordering_fields будет добавлено больше полей
+    pagination_class = RunAndUserPagination
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.none()
@@ -38,6 +44,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['first_name', 'last_name']  # Указываем поля по которым будет вестись поиск
     ordering_fields = ['date_joined']
     ordering = ['date_joined']
+    pagination_class = RunAndUserPagination
 
     def get_queryset(self):
         # Исключаем суперпользователей
