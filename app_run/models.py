@@ -13,3 +13,8 @@ class Run(models.Model):
     comment = models.TextField()
     athlete = models.ForeignKey(User, on_delete=models.CASCADE)
     status = models.CharField(choices=STATUS_CHOICES, default='init')
+
+class AthleteInfo(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    weight = models.IntegerField(null=True, blank=True)
+    goals = models.TextField(blank=True)
