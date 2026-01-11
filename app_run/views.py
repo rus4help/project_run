@@ -1,3 +1,5 @@
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.conf import settings
@@ -23,6 +25,8 @@ def company_details(request):
 class RunViewSet(viewsets.ModelViewSet):
     queryset = Run.objects.all().select_related('athlete')
     serializer_class = RunSerializer
+    filter_backends = [DjangoFilterBackend]  # Указываем какой класс будет использоваться для фильтра
+    filterset_fields = ['status', 'athlete']  # Поля, по которым будет происходить фильтрация
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.none()
