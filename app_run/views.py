@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
-from .models import Run, AthleteInfo
+from .models import Run, AthleteInfo, Challenge
 from django.contrib.auth.models import User
 from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
 
@@ -96,6 +96,12 @@ class StopRunView(APIView):
         # 3. Меняем статус и сохраняем
         run.status = 'finished'
         run.save()
+
+        athlete = run.athlete
+        finished_runs_count = Run.objects.filter(athlete=athlete, status='finished').count()
+
+        if finished_runs_count == 10:
+            Challenge.objects.get_or_create(athlete=athlete)
 
         # 4. Возвращаем JSON-ответ
         return Response({'status': run.status}, status=status.HTTP_200_OK)
