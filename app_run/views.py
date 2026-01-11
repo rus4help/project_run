@@ -12,9 +12,9 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
-from .models import Run
+from .models import Run, AthleteInfo
 from django.contrib.auth.models import User
-from .serializers import RunSerializer, UserSerializer
+from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer
 
 
 @api_view(['GET'])
@@ -99,3 +99,30 @@ class StopRunView(APIView):
 
         # 4. Возвращаем JSON-ответ
         return Response({'status': run.status}, status=status.HTTP_200_OK)
+
+class AthleteInfoView(APIView):
+    def get(self, request, user_id):
+        # 1. Проверяем, существует ли пользователь
+        user = get_object_or_404(User, id=user_id)
+
+        # 2. Получаем или создаём AthleteInfo для этого пользователя
+        athlete_info, created = AthleteInfo.objects.get_or_create(user=user)
+
+        # 3. Сериализуем данные
+        serializer = AthleteInfoSerializer(athlete_info)
+
+        # 4. Возвращаем с 200 OK (даже если создали запись)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, user_id):
+        # 1. Проверяем, существует ли пользователь
+        user = get_object_or_404(User, id=user_id)
+
+        # 2. Получаем или создаём AthleteInfo для этого пользователя
+        athlete_info, created = AthleteInfo.objects.get_or_create(user=user)
+
+        # 3. Сериализуем данные
+        serializer = AthleteInfoSerializer(athlete_info)
+
+        # 4. Возвращаем с 200 OK (даже если создали запись)
+        return Response(serializer.data, status=status.HTTP_200_OK)
