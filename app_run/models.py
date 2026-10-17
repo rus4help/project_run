@@ -21,4 +21,4 @@ class AthleteInfo(models.Model):
 
 class Challenge(models.Model):
     athlete = models.ForeignKey(User, on_delete=models.CASCADE)
-    full_name = models.TextField(default="Сделай 10 Забегов!")
+    full_name = models.TextField(default='Сделай 10 Забегов!')
