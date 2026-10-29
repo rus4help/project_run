@@ -56,6 +56,9 @@ class ChallengeSerializer(serializers.ModelSerializer):
 
 
 class PositionSerializer(serializers.ModelSerializer):
+    # DRF сам проверит существование ID и превратит его в объект Run
+    run = serializers.PrimaryKeyRelatedField(queryset=Run.objects.all())
+
     class Meta:
         model = Position
         fields = '__all__'
@@ -77,11 +80,7 @@ class PositionSerializer(serializers.ModelSerializer):
         return value
 
     def validate_run(self, value):
-        try:
-            value.instance.id
-        except Run.DoesNotExist:
-            raise serializers.ValidationError("Run with this ID does not exist.")
-
+        # value — это объект Run. Просто проверяем статус.
         if value.status != 'in_progress':
             raise serializers.ValidationError('Run must be in progress status')
         return value
