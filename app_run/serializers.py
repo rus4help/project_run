@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
         return 'coach' if obj.is_staff else 'athlete'
 
     def get_runs_finished(self, obj):
-        return obj.run_set.filter(status="finished").count()
+        return obj.run_set.filter(status='finished').count()
 
 
 # Сериализатор только для данных атлета (минималистичный)
@@ -27,7 +27,7 @@ class AthleteSerializer(serializers.ModelSerializer):
 
 
 class RunSerializer(serializers.ModelSerializer):
-    athlete_data = AthleteSerializer(source="athlete", read_only=True)
+    athlete_data = AthleteSerializer(source='athlete', read_only=True)
 
     class Meta:
         model = Run
@@ -46,7 +46,7 @@ class AthleteInfoSerializer(serializers.ModelSerializer):
             if value > 0 and value < 900:
                 return value
             else:
-                raise serializers.ValidationError("Weight must be between 0 and 900.")
+                raise serializers.ValidationError('Weight must be between 0 and 900.')
         return value
 
 class ChallengeSerializer(serializers.ModelSerializer):
