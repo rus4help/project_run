@@ -14,9 +14,9 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
-from .models import Run, AthleteInfo, Challenge
+from .models import Run, AthleteInfo, Challenge, Position
 from django.contrib.auth.models import User
-from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer, ChallengeSerializer
+from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer, ChallengeSerializer, PositionSerializer
 
 
 @api_view(['GET'])
@@ -144,3 +144,18 @@ class AthleteInfoView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PositionViewSet(viewsets.ModelViewSet):
+    queryset = Position.objects.all()
+    serializer_class = PositionSerializer
+
+    def get_queryset(self):
+        # 1. Получаем базовый список всех позиций
+        queryset = super().get_queryset()
+
+        run_id = self.request.query_params.get('run')
+
+        if run_id is not None:
+            queryset = queryset.filter(run_id=run_id)
+        return queryset
+

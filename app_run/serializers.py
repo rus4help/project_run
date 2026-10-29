@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Run, AthleteInfo, Challenge
+from .models import Run, AthleteInfo, Challenge, Position
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -53,3 +53,35 @@ class ChallengeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Challenge
         fields = ['full_name', 'athlete']
+
+
+class PositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Position
+        fields = '__all__'
+
+    def validate_latitude(self, value):
+        if value is not None:
+            if value >= -90 and value <= 90:
+                return value
+            else:
+                raise serializers.ValidationError('Latitude must be between -90 and 90.')
+        return value
+
+    def validate_longitude(self, value):
+        if value is not None:
+            if value >= -180 and value <= 180:
+                return value
+            else:
+                raise serializers.ValidationError('Longitude must be between -180 and 180.')
+        return value
+
+    def validate_run(self, value):
+        try:
+            run_obj = Run.objects.get(id=value)
+        except Run.DoesNotExist:
+            raise serializers.ValidationError("Run with this ID does not exist.")
+
+        if run_obj.status != 'in_progress':
+            raise serializers.ValidationError('Run must be in progress status')
+        return value
