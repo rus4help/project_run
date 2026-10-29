@@ -1,3 +1,5 @@
+from idlelib import run
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView
@@ -8,6 +10,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from django.conf import settings
+
+from geopy.distance import geodesic
 
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -97,6 +101,27 @@ class StopRunView(APIView):
 
         # 3. Меняем статус и сохраняем
         run.status = 'finished'
+
+        all_geo_positions = Position.objects.filter(run=run).order_by('created_at')
+        positions_list = list(all_geo_positions)
+        total_distance = 0.0
+
+        # Считаем расстояние, только если точек больше одной
+        if len(positions_list) > 1:
+            # zip создает пары: (точка0, точка1), (точка1, точка2) и т.д.
+            for p1, p2 in zip(positions_list, positions_list[1:]):
+                # geodesic ждет кортежи (широта, долгота)
+                point_a = (p1.latitude, p1.longitude)
+                point_b = (p2.latitude, p2.longitude)
+
+                # Считаем расстояние между двумя точками в км
+                segment = geodesic(point_a, point_b).kilometers
+                total_distance += segment
+
+        # 5. Записываем результат в модель
+        run.distance = total_distance
+
+        # 6. Сохраняем всё сразу (и статус, и расстояние)
         run.save()
 
         athlete = run.athlete
