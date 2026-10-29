@@ -1,5 +1,3 @@
-from idlelib import run
-
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView
