@@ -78,10 +78,10 @@ class PositionSerializer(serializers.ModelSerializer):
 
     def validate_run(self, value):
         try:
-            run_obj = Run.objects.get(id=value)
+            value.instance.id
         except Run.DoesNotExist:
             raise serializers.ValidationError("Run with this ID does not exist.")
 
-        if run_obj.status != 'in_progress':
+        if value.status != 'in_progress':
             raise serializers.ValidationError('Run must be in progress status')
         return value
