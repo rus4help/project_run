@@ -9,6 +9,8 @@ from rest_framework.response import Response
 
 from django.conf import settings
 
+from django.db.models import Sum
+
 from geopy.distance import geodesic
 
 from rest_framework import viewsets
@@ -125,9 +127,13 @@ class StopRunView(APIView):
 
         athlete = run.athlete
         finished_runs_count = Run.objects.filter(athlete=athlete, status='finished').count()
+        challenge50kmAndMore = Run.objects.filter(athlete=athlete, status='finished').aggregate(total=Sum('distance'))['total'] or 0
 
         if finished_runs_count == 10:
             Challenge.objects.get_or_create(athlete=athlete)
+
+        if challenge50kmAndMore >= 50:
+            Challenge.objects.get_or_create(athlete=athlete, full_name='Пробеги 50 километров!')
 
         # 4. Возвращаем JSON-ответ
         return Response({'status': run.status}, status=status.HTTP_200_OK)
