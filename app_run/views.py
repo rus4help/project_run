@@ -30,6 +30,7 @@ def company_details(request):
                'contacts': settings.CONTACTS}
     return Response(details)
 
+
 class RunAndUserPagination(PageNumberPagination):
     page_size_query_param = 'size'  # Разрешаем изменять количество объектов через query параметр size в url
 
@@ -40,8 +41,9 @@ class RunViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, OrderingFilter]  # Указываем какой класс будет использоваться для фильтра
     filterset_fields = ['status', 'athlete']  # Поля, по которым будет происходить фильтрация
     ordering_fields = ['created_at']  # Поля по которым будет возможна сортировка
-    ordering = ['created_at'] # Сортировка по умолчанию, если на будущее в ordering_fields будет добавлено больше полей
+    ordering = ['created_at']  # Сортировка по умолчанию, если на будущее в ordering_fields будет добавлено больше полей
     pagination_class = RunAndUserPagination
+
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.none()
@@ -127,7 +129,8 @@ class StopRunView(APIView):
 
         athlete = run.athlete
         finished_runs_count = Run.objects.filter(athlete=athlete, status='finished').count()
-        challenge50kmAndMore = Run.objects.filter(athlete=athlete, status='finished').aggregate(total=Sum('distance'))['total'] or 0
+        challenge50kmAndMore = Run.objects.filter(athlete=athlete, status='finished').aggregate(total=Sum('distance'))[
+                                   'total'] or 0
 
         if finished_runs_count == 10:
             Challenge.objects.get_or_create(athlete=athlete)
@@ -138,6 +141,7 @@ class StopRunView(APIView):
         # 4. Возвращаем JSON-ответ
         return Response({'status': run.status}, status=status.HTTP_200_OK)
 
+
 class ChallengeListView(ListAPIView):
     serializer_class = ChallengeSerializer
 
@@ -147,6 +151,7 @@ class ChallengeListView(ListAPIView):
         if athlete_id is not None:
             queryset = queryset.filter(athlete_id=athlete_id)
         return queryset
+
 
 class AthleteInfoView(APIView):
     def get(self, request, user_id):
@@ -175,6 +180,7 @@ class AthleteInfoView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class PositionViewSet(viewsets.ModelViewSet):
     queryset = Position.objects.all()
     serializer_class = PositionSerializer
@@ -188,4 +194,3 @@ class PositionViewSet(viewsets.ModelViewSet):
         if run_id is not None:
             queryset = queryset.filter(run_id=run_id)
         return queryset
-
