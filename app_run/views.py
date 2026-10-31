@@ -248,6 +248,34 @@ class PositionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(run_id=run_id)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        # 1. Сначала сохраняем позицию стандартным способом
+        response = super().create(request, *args, **kwargs)
+
+        # 2. Получаем данные сохраненной позиции
+        position = Position.objects.get(id=response.data['id'])
+        user = request.user
+
+        # 3. Ищем предметы, которые пользователь еще НЕ собрал
+        available_items = CollectibleItem.objects.exclude(collected_by=user)
+
+        # Координаты текущей точки
+        current_point = (position.latitude, position.longitude)
+
+        # 4. Проверяем каждый доступный предмет
+        for item in available_items:
+            item_point = (item.latitude, item.longitude)
+
+            # Считаем расстояние в километрах
+            distance = geodesic(current_point, item_point).kilometers
+
+            # 100 метров = 0.1 км
+            if distance <= 0.1:
+                # Добавляем предмет в коллекцию пользователя
+                item.collected_by.add(user)
+
+        return response
+
 
 class CollectibleItemViewSet(viewsets.ModelViewSet):
     queryset = CollectibleItem.objects.all()
