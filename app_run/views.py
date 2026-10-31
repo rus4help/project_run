@@ -251,6 +251,31 @@ class PositionViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(run_id=run_id)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        # 1. Стандартное сохранение позиции через DRF
+        response = super().create(request, *args, **kwargs)
+
+        # 2. Логика сбора предметов
+        user = request.user
+        lat = response.data['latitude']
+        lon = response.data['longitude']
+
+        # Ищем предметы, которые пользователь еще не собрал
+        available_items = CollectibleItem.objects.exclude(collected_by=user)
+
+        for item in available_items:
+            user_point = (lat, lon)
+            item_point = (item.latitude, item.longitude)
+
+            # Считаем расстояние в км
+            distance = geodesic(user_point, item_point).kilometers
+
+            # Если ближе 100 метров (0.1 км), добавляем в коллекцию
+            if distance < 0.1:
+                item.collected_by.add(user)
+
+        return response
+
 
 class CollectibleItemViewSet(viewsets.ModelViewSet):
     queryset = CollectibleItem.objects.all()
