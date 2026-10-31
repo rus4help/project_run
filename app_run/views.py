@@ -23,7 +23,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
 from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 from django.contrib.auth.models import User
-from .serializers import (RunSerializer, UserSerializer, AthleteInfoSerializer, ChallengeSerializer,
+from .serializers import (RunSerializer, UserSerializer, UserDetailSerializer, AthleteInfoSerializer,
+                          ChallengeSerializer,
                           PositionSerializer, \
                           CollectibleItemSerializer)
 
@@ -53,6 +54,12 @@ class RunViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.none()
     serializer_class = UserSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':  # Если запрашиваем одного пользователя (/users/{id}/)
+            return UserDetailSerializer
+        return UserSerializer  # Во всех остальных случаях (список, создание и т.д.)
+
     filter_backends = [SearchFilter, OrderingFilter]  # Подключаем SearchFilter здесь
     search_fields = ['first_name', 'last_name']  # Указываем поля по которым будет вестись поиск
     ordering_fields = ['date_joined']

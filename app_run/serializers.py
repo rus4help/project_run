@@ -91,7 +91,7 @@ class PositionSerializer(serializers.ModelSerializer):
 class CollectibleItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CollectibleItem
-        fields = '__all__'
+        fields = ['name', 'uid', 'latitude', 'longitude', 'picture', 'value']
 
     def validate_latitude(self, value):
         if value is not None:
@@ -108,3 +108,12 @@ class CollectibleItemSerializer(serializers.ModelSerializer):
             else:
                 raise serializers.ValidationError('Longitude must be between -180 and 180.')
         return value
+
+
+class UserDetailSerializer(UserSerializer):
+    # Добавляем только то, чего нет в родительском классе
+    items = CollectibleItemSerializer(many=True, read_only=True)
+
+    class Meta(UserSerializer.Meta):
+        # Наследуем все поля от родителя и добавляем 'items'
+        fields = UserSerializer.Meta.fields + ['items']
