@@ -2,6 +2,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView
 
+from rest_framework.permissions import IsAuthenticated
+
 from openpyxl import load_workbook
 from io import BytesIO
 
@@ -241,36 +243,38 @@ class PositionViewSet(viewsets.ModelViewSet):
     queryset = Position.objects.all()
     serializer_class = PositionSerializer
 
+    # 1. Разрешаем доступ только авторизованным пользователям
+    permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
-        # 1. Получаем базовый список всех позиций
         queryset = super().get_queryset()
-
         run_id = self.request.query_params.get('run')
-
         if run_id is not None:
             queryset = queryset.filter(run_id=run_id)
         return queryset
 
     def create(self, request, *args, **kwargs):
-        # 1. Стандартное сохранение позиции через DRF
+        # 2. Стандартное сохранение позиции
         response = super().create(request, *args, **kwargs)
 
-        # 2. Логика сбора предметов
         user = request.user
+
+        # 3. Дополнительная проверка: если вдруг пользователь не авторизован, выходим
+        if not user.is_authenticated:
+            return response
+
         lat = response.data['latitude']
         lon = response.data['longitude']
 
-        # Ищем предметы, которые пользователь еще не собрал
+        # Теперь здесь точно будет реальный User с id
         available_items = CollectibleItem.objects.exclude(collected_by=user)
 
         for item in available_items:
             user_point = (lat, lon)
             item_point = (item.latitude, item.longitude)
 
-            # Считаем расстояние в км
             distance = geodesic(user_point, item_point).kilometers
 
-            # Если ближе 100 метров (0.1 км), добавляем в коллекцию
             if distance < 0.1:
                 item.collected_by.add(user)
 
