@@ -2,6 +2,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView
 
+from openpyxl import load_workbook
+from io import BytesIO
+
 from rest_framework.pagination import PageNumberPagination
 
 from rest_framework.decorators import api_view
@@ -69,6 +72,50 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         # Иначе — все (is_superuser исключены)
 
         return queryset
+
+
+class UploadFileView(APIView):
+    def post(self, request):
+        # Получаем файл из запроса. 'file' — это ключ, который мы будем использовать при отправке
+        uploaded_file = request.FILES.get('file')
+
+        if not uploaded_file:
+            return Response({'error': 'No file provided'}, status=400)
+
+        # Открыли файл
+        wb = load_workbook(filename=BytesIO(uploaded_file.read()))
+
+        # Читаем файл. ws - это таблица с активным листом
+        ws = wb.active
+
+        error_rows = []
+
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            # min_row=2 означает, что мы пропускаем первую строку (заголовки)
+            # values_only=True возвращает просто значения ячеек, а не объекты ячеек
+
+            # Пропускаем полностью пустые строки, если они есть в конце файла
+            if not any(row):
+                continue
+
+            data = {
+                'name': row[0],
+                'uid': row[1],
+                'value': row[2],
+                'latitude': row[3],
+                'longitude': row[4],
+                'picture': row[5]
+            }
+
+            serializer = CollectibleItemSerializer(data=data)
+
+            if serializer.is_valid():
+                serializer.save()  # Сохраняем в БД
+            else:
+                # Если есть ошибки, добавляем исходную строку (row) в список ошибок
+                error_rows.append(list(row))
+
+        return Response(error_rows, status=200)
 
 
 class StartRunView(APIView):

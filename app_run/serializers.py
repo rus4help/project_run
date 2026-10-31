@@ -92,3 +92,19 @@ class CollectibleItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CollectibleItem
         fields = '__all__'
+
+    def validate_latitude(self, value):
+        if value is not None:
+            if value >= -90 and value <= 90:
+                return value
+            else:
+                raise serializers.ValidationError('Latitude must be between -90 and 90.')
+        return value
+
+    def validate_longitude(self, value):
+        if value is not None:
+            if value >= -180 and value <= 180:
+                return value
+            else:
+                raise serializers.ValidationError('Longitude must be between -180 and 180.')
+        return value
