@@ -18,9 +18,11 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
-from .models import Run, AthleteInfo, Challenge, Position
+from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 from django.contrib.auth.models import User
-from .serializers import RunSerializer, UserSerializer, AthleteInfoSerializer, ChallengeSerializer, PositionSerializer
+from .serializers import (RunSerializer, UserSerializer, AthleteInfoSerializer, ChallengeSerializer,
+                          PositionSerializer, \
+                          CollectibleItemSerializer)
 
 
 @api_view(['GET'])
@@ -194,3 +196,8 @@ class PositionViewSet(viewsets.ModelViewSet):
         if run_id is not None:
             queryset = queryset.filter(run_id=run_id)
         return queryset
+
+
+class CollectibleItemViewSet(viewsets.ModelViewSet):
+    queryset = CollectibleItem.objects.all()
+    serializer_class = CollectibleItemSerializer

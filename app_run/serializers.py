@@ -1,15 +1,16 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Run, AthleteInfo, Challenge, Position
+from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 
 
 class UserSerializer(serializers.ModelSerializer):
-    type = serializers.SerializerMethodField() # Тут мы задаем новое поле, которого нет в модели БД
+    type = serializers.SerializerMethodField()  # Тут мы задаем новое поле, которого нет в модели БД
     runs_finished = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'date_joined', 'username', 'first_name', 'last_name', 'type', 'runs_finished'] # Здесь добавили данное поле type и runs_finished
+        fields = ['id', 'date_joined', 'username', 'first_name', 'last_name', 'type',
+                  'runs_finished']  # Здесь добавили данное поле type и runs_finished
 
     # Определяем метод, который вычисляет значение поля
     def get_type(self, obj):
@@ -49,6 +50,7 @@ class AthleteInfoSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Weight must be between 0 and 900.')
         return value
 
+
 class ChallengeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Challenge
@@ -84,3 +86,9 @@ class PositionSerializer(serializers.ModelSerializer):
         if value.status != 'in_progress':
             raise serializers.ValidationError('Run must be in progress status')
         return value
+
+
+class CollectibleItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CollectibleItem
+        fields = '__all__'
