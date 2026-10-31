@@ -254,10 +254,10 @@ class PositionViewSet(viewsets.ModelViewSet):
 
         # 2. Получаем данные сохраненной позиции
         position = Position.objects.get(id=response.data['id'])
-        user = request.user
+        athlete = position.run.athlete
 
         # 3. Ищем предметы, которые пользователь еще НЕ собрал
-        available_items = CollectibleItem.objects.exclude(collected_by=user)
+        available_items = CollectibleItem.objects.exclude(collected_by=athlete)
 
         # Координаты текущей точки
         current_point = (position.latitude, position.longitude)
@@ -272,7 +272,7 @@ class PositionViewSet(viewsets.ModelViewSet):
             # 100 метров = 0.1 км
             if distance <= 0.1:
                 # Добавляем предмет в коллекцию пользователя
-                item.collected_by.add(user)
+                item.collected_by.add(athlete)
 
         return response
 
