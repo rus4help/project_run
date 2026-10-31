@@ -177,7 +177,7 @@ class StopRunView(APIView):
                 total_distance += segment
 
         # 5. Записываем результат в модель
-        # Округляем до 3 знаков после запятой
+        # Округляем до 3-х знаков после запятой
         run.distance = round(total_distance, 3)
 
         # 6. Сохраняем всё сразу (и статус, и расстояние)
