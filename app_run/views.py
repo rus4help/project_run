@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from django.conf import settings
 
-from django.db.models import Sum
+from django.db.models import Sum, Min, Max
 
 from geopy.distance import geodesic
 
@@ -147,55 +147,62 @@ class StartRunView(APIView):
 
 class StopRunView(APIView):
     def post(self, request, run_id):
-        # 1. Получаем объект или 404
         run = get_object_or_404(Run, id=run_id)
 
-        # 2. Проверяем, можно ли стартовать
         if run.status != 'in_progress':
             return Response(
                 {'error': 'Невозможно закончить забег: он ещё не начат или уже завершён.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 3. Меняем статус и сохраняем
         run.status = 'finished'
 
+        # --- Расчет расстояния ---
         all_geo_positions = Position.objects.filter(run=run).order_by('created_at')
         positions_list = list(all_geo_positions)
         total_distance = 0.0
 
-        # Считаем расстояние, только если точек больше одной
         if len(positions_list) > 1:
-            # zip создает пары: (точка0, точка1), (точка1, точка2) и т.д.
             for p1, p2 in zip(positions_list, positions_list[1:]):
-                # geodesic ждет кортежи (широта, долгота)
                 point_a = (p1.latitude, p1.longitude)
                 point_b = (p2.latitude, p2.longitude)
-
-                # Считаем расстояние между двумя точками в км
                 segment = geodesic(point_a, point_b).kilometers
                 total_distance += segment
 
-        # 5. Записываем результат в модель
-        # Округляем до 3-х знаков после запятой
         run.distance = round(total_distance, 3)
 
-        # 6. Сохраняем всё сразу (и статус, и расстояние)
+        # --- Расчет времени ---
+        time_data = Position.objects.filter(run=run).aggregate(
+            min_time=Min('date_time'),
+            max_time=Max('date_time')
+        )
+
+        first_time = time_data['min_time']
+        last_time = time_data['max_time']
+
+        # Используем правильные имена переменных!
+        if first_time and last_time:
+            duration = last_time - first_time
+            run.run_time_seconds = int(duration.total_seconds())
+
+        # --- Сохраняем всё за один раз ---
         run.save()
 
+        # --- Челленджи ---
         athlete = run.athlete
         finished_runs_count = Run.objects.filter(athlete=athlete, status='finished').count()
-        challenge50kmAndMore = Run.objects.filter(athlete=athlete, status='finished').aggregate(total=Sum('distance'))[
-                                   'total'] or 0
 
         if finished_runs_count == 10:
-            Challenge.objects.get_or_create(athlete=athlete)
+            Challenge.objects.get_or_create(athlete=athlete, full_name='Сделай 10 Забегов!')
 
-        if challenge50kmAndMore >= 50:
+        total_dist = Run.objects.filter(athlete=athlete, status='finished').aggregate(total=Sum('distance'))[
+                         'total'] or 0
+
+        if total_dist >= 50:
             Challenge.objects.get_or_create(athlete=athlete, full_name='Пробеги 50 километров!')
 
-        # 4. Возвращаем JSON-ответ
-        return Response({'status': run.status}, status=status.HTTP_200_OK)
+        return Response({'status': run.status, 'distance': run.distance, 'time': run.run_time_seconds},
+                        status=status.HTTP_200_OK)
 
 
 class ChallengeListView(ListAPIView):
