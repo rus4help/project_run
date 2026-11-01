@@ -257,7 +257,7 @@ class PositionViewSet(viewsets.ModelViewSet):
         athlete = position.run.athlete
 
         # 3. Ищем предметы, которые пользователь еще НЕ собрал
-        available_items = CollectibleItem.objects.exclude(collected_by=athlete)
+        available_items = CollectibleItem.objects.exclude(collected_by=athlete).prefetch_related('collected_by')
 
         # Координаты текущей точки
         current_point = (position.latitude, position.longitude)
