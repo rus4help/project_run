@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from django.conf import settings
 
-from django.db.models import Sum, Min, Max
+from django.db.models import Sum, Min, Max, Count, Q
 
 from geopy.distance import geodesic
 
