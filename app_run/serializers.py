@@ -61,6 +61,9 @@ class PositionSerializer(serializers.ModelSerializer):
     # DRF сам проверит существование ID и превратит его в объект Run
     run = serializers.PrimaryKeyRelatedField(queryset=Run.objects.all())
 
+    # Явно указываем формат ввода и вывода
+    date_time = serializers.DateTimeField(format='%Y-%m-%dT%H:%M:%S.%f', input_formats=['%Y-%m-%dT%H:%M:%S.%f'])
+
     class Meta:
         model = Position
         fields = '__all__'
