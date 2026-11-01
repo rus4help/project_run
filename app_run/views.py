@@ -67,16 +67,19 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = RunAndUserPagination
 
     def get_queryset(self):
-        # Исключаем суперпользователей
         queryset = User.objects.filter(is_superuser=False)
 
+        # Фильтрация по типу (как у тебя было)
         user_type = self.request.query_params.get('type', None)
-
         if user_type == 'coach':
             queryset = queryset.filter(is_staff=True)
         elif user_type == 'athlete':
             queryset = queryset.filter(is_staff=False)
-        # Иначе — все (is_superuser исключены)
+
+        # Сразу считаем количество finished забегов для каждого юзера
+        queryset = queryset.annotate(
+            finished_runs_count=Count('run', filter=Q(run__status='finished'))
+        )
 
         return queryset
 

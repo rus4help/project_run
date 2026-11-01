@@ -5,7 +5,7 @@ from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 
 class UserSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()  # Тут мы задаем новое поле, которого нет в модели БД
-    runs_finished = serializers.SerializerMethodField()
+    runs_finished = serializers.IntegerField(source='finished_runs_count', read_only=True)
 
     class Meta:
         model = User
@@ -15,9 +15,6 @@ class UserSerializer(serializers.ModelSerializer):
     # Определяем метод, который вычисляет значение поля
     def get_type(self, obj):
         return 'coach' if obj.is_staff else 'athlete'
-
-    def get_runs_finished(self, obj):
-        return obj.run_set.filter(status='finished').count()
 
 
 # Сериализатор только для данных атлета (минималистичный)
