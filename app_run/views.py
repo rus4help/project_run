@@ -215,6 +215,9 @@ class StopRunView(APIView):
         if total_dist >= 50:
             Challenge.objects.get_or_create(athlete=athlete, full_name='Пробеги 50 километров!')
 
+        if run.run_time_seconds <= 600 and run.distance >= 2.0:
+            Challenge.objects.get_or_create(athlete=athlete, full_name='2 километра за 10 минут!')
+
         return Response({
             'status': run.status,
             'distance': run.distance,
