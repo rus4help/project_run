@@ -185,20 +185,21 @@ class StopRunView(APIView):
         first_time = time_data['min_time']
         last_time = time_data['max_time']
 
-        # Используем правильные имена переменных!
         if first_time and last_time:
             duration = last_time - first_time
             run.run_time_seconds = int(duration.total_seconds())
 
-            # --- Расчет средней скорости (м/с) ---
-        if run.run_time_seconds and run.run_time_seconds > 0:
-            # Переводим км в метры и делим на секунды
-            avg_speed = (run.distance * 1000) / run.run_time_seconds
-            run.speed = round(avg_speed, 2)
+        # --- Расчет СРЕДНЕЙ СКОРОСТИ (как среднее арифметическое всех позиций) ---
+        avg_speed_data = Position.objects.filter(run=run).aggregate(
+            avg_speed_val=Avg('speed')
+        )
+
+        if avg_speed_data['avg_speed_val'] is not None:
+            run.speed = round(avg_speed_data['avg_speed_val'], 2)
         else:
             run.speed = 0.0
 
-            # --- Сохраняем всё за один раз ---
+        # --- Сохраняем всё за один раз ---
         run.save()
 
         # --- Челленджи ---
