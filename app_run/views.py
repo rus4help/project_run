@@ -188,7 +188,15 @@ class StopRunView(APIView):
             duration = last_time - first_time
             run.run_time_seconds = int(duration.total_seconds())
 
-        # --- Сохраняем всё за один раз ---
+            # --- Расчет средней скорости (м/с) ---
+        if run.run_time_seconds and run.run_time_seconds > 0:
+            # Переводим км в метры и делим на секунды
+            avg_speed = (run.distance * 1000) / run.run_time_seconds
+            run.speed = round(avg_speed, 2)
+        else:
+            run.speed = 0.0
+
+            # --- Сохраняем всё за один раз ---
         run.save()
 
         # --- Челленджи ---
@@ -204,8 +212,12 @@ class StopRunView(APIView):
         if total_dist >= 50:
             Challenge.objects.get_or_create(athlete=athlete, full_name='Пробеги 50 километров!')
 
-        return Response({'status': run.status, 'distance': run.distance, 'time': run.run_time_seconds},
-                        status=status.HTTP_200_OK)
+        return Response({
+            'status': run.status,
+            'distance': run.distance,
+            'time': run.run_time_seconds,
+            'speed': run.speed
+        }, status=status.HTTP_200_OK)
 
 
 class ChallengeListView(ListAPIView):
@@ -257,6 +269,37 @@ class PositionViewSet(viewsets.ModelViewSet):
         if run_id is not None:
             queryset = queryset.filter(run_id=run_id)
         return queryset
+
+    def perform_create(self, serializer):
+        validated_data = serializer.validated_data
+        run = validated_data['run']
+        current_lat = validated_data['latitude']
+        current_lon = validated_data['longitude']
+        current_time = validated_data['date_time']
+
+        # Ищем предыдущую позицию
+        prev_position = Position.objects.filter(
+            run=run,
+            date_time__lt=current_time
+        ).order_by('-date_time').first()
+
+        speed = 0.0
+        total_distance = 0.0
+
+        if prev_position:
+            prev_point = (prev_position.latitude, prev_position.longitude)
+            curr_point = (float(current_lat), float(current_lon))
+
+            segment_km = geodesic(prev_point, curr_point).kilometers
+            time_diff = (current_time - prev_position.date_time).total_seconds()
+
+            if time_diff > 0:
+                speed = round((segment_km * 1000) / time_diff, 2)
+
+            total_distance = round(prev_position.distance + segment_km, 2)
+
+        # Сохраняем с вычисленными полями
+        serializer.save(speed=speed, distance=total_distance)
 
     def create(self, request, *args, **kwargs):
         # 1. Сначала сохраняем позицию стандартным способом
