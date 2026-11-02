@@ -290,13 +290,17 @@ class PositionViewSet(viewsets.ModelViewSet):
             prev_point = (prev_position.latitude, prev_position.longitude)
             curr_point = (float(current_lat), float(current_lon))
 
+            # Получаем расстояние в километрах (тип float)
             segment_km = geodesic(prev_point, curr_point).kilometers
+
+            # Безопасно переводим float в Decimal через str()
+            segment_decimal_km = Decimal(str(segment_km))
             time_diff = (current_time - prev_position.date_time).total_seconds()
 
             if time_diff > 0:
                 speed = round((segment_km * 1000) / time_diff, 2)
 
-            total_distance = round(prev_position.distance + segment_km, 2)
+            total_distance = round(prev_position.distance + segment_decimal_km, 2)
 
         # Сохраняем с вычисленными полями
         serializer.save(speed=speed, distance=total_distance)
