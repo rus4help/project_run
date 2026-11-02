@@ -2,6 +2,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView
 
+from decimal import Decimal
+
 from openpyxl import load_workbook
 from io import BytesIO
 
