@@ -371,3 +371,54 @@ class PositionViewSet(viewsets.ModelViewSet):
 class CollectibleItemViewSet(viewsets.ModelViewSet):
     queryset = CollectibleItem.objects.all()
     serializer_class = CollectibleItemSerializer
+
+
+class ChallengesSummaryView(APIView):
+    """
+    Итоговая таблица челленджей.
+    Группируем челленджи по названию и собираем атлетов, которые их выполнили.
+    """
+
+    def get(self, request):
+        # 1. Получаем ВСЕ челленджи из базы ОДНИМ запросом,
+        #    сразу подтягивая связанные данные атлета (чтобы не делать N+1)
+        challenges = Challenge.objects.all().select_related('athlete')
+
+        # 2. Создаём словарь-группировку.
+        #    Ключ — название челленджа (str)
+        #    Значение — список словарей с атлетами (list)
+        grouped = {}
+
+        # 3. Проходим по каждому челленджу и формируем списки
+        for challenge in challenges:
+            challenge_name = challenge.full_name
+
+            # Если такого списка нет — создаём пустой список
+            if challenge_name not in grouped:
+                grouped[challenge_name] = []
+
+            # Достаём атлета (он уже загружен благодаря select_related)
+            athlete = challenge.athlete
+
+            # Формируем словарь с данными атлета по ТЗ
+            athlete_data = {
+                'id': athlete.id,
+                'full_name': f"{athlete.first_name} {athlete.last_name}",
+                'username': athlete.username,
+            }
+
+            # Добавляем атлета в нужный список
+            grouped[challenge_name].append(athlete_data)
+
+        # 4. Превращаем словарь в список словарей (как в примере JSON из ТЗ)
+        #    Было: {"Пробеги 50 км!": [...], "Сделай 10 забегов!": [...]}
+        #    Стало: [{"name_to_display": "...", "athletes": [...]}, ...]
+        result = []
+        for name_to_display, athletes in grouped.items():
+            result.append({
+                'name_to_display': name_to_display,
+                'athletes': athletes,
+            })
+
+        # 5. Отдаём результат клиенту
+        return Response(result, status=status.HTTP_200_OK)

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from app_run.views import company_details, StartRunView, StopRunView, AthleteInfoView, ChallengeListView, \
-    CollectibleItemViewSet, UploadFileView, SubscribeToCoachView
+    CollectibleItemViewSet, UploadFileView, SubscribeToCoachView, ChallengesSummaryView
 from rest_framework.routers import DefaultRouter
 from app_run.views import RunViewSet, UserViewSet, PositionViewSet
 
@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/athlete_info/<int:user_id>/', AthleteInfoView.as_view()),
     path('api/subscribe_to_coach/<int:id>/', SubscribeToCoachView.as_view()),
     path('api/challenges/', ChallengeListView.as_view()),
+    path('api/challenges_summary/', ChallengesSummaryView.as_view()),
     path('api/upload_file/', UploadFileView.as_view()),
     path('', include(router.urls))
 ]
