@@ -147,3 +147,11 @@ class SubscribeSerializer(serializers.ModelSerializer):
         if data['athlete'].is_staff:
             raise serializers.ValidationError("Athlete must be an athlete")
         return data
+
+
+class RateCoachSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(min_value=1, max_value=5)
+
+    class Meta:
+        model = Subscribe
+        fields = ['athlete', 'rating']

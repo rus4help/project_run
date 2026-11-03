@@ -422,3 +422,39 @@ class ChallengesSummaryView(APIView):
 
         # 5. Отдаём результат клиенту
         return Response(result, status=status.HTTP_200_OK)
+
+
+class RateCoachView(APIView):
+    def post(self, request, coach_id):
+        # 1. Получаем тренера из URL. Если его нет — вернется 404.
+        coach = get_object_or_404(User, id=coach_id)
+
+        # 2. Валидируем данные из тела запроса через наш сериализатор.
+        serializer = RateCoachSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        athlete = serializer.validated_data['athlete']
+        new_rating = serializer.validated_data['rating']
+
+        # 3. Проверяем типы пользователей.
+        # Порядок важен: сначала проверяем, является ли coach тренером.
+        if not coach.is_staff:
+            return Response({'error': 'User is not a coach'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if athlete.is_staff:
+            return Response({'error': 'User is not an athlete'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4. Проверяем, подписан ли атлет на этого тренера.
+        # Ищем существующую запись в таблице Subscribe.
+        subscription = Subscribe.objects.filter(athlete=athlete, coach=coach).first()
+
+        if not subscription:
+            return Response({'error': 'Athlete is not subscribed to this coach'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 5. Обновляем рейтинг в найденной подписке и сохраняем.
+        # Мы не создаем новую запись, а меняем поле в старой.
+        subscription.rating = new_rating
+        subscription.save()
+
+        return Response({'status': 'rating updated'}, status=status.HTTP_200_OK)
