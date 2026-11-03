@@ -25,10 +25,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
 from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
 from django.contrib.auth.models import User
-from .serializers import (RunSerializer, UserSerializer, UserDetailSerializer, AthleteInfoSerializer,
+from .serializers import (RunSerializer, UserSerializer, CoachDetailSerializer, AthleteDetailSerializer,
+                          AthleteInfoSerializer,
                           ChallengeSerializer,
                           PositionSerializer, \
-                          CollectibleItemSerializer)
+                          CollectibleItemSerializer, )
 
 
 @api_view(['GET'])
@@ -58,9 +59,18 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
 
     def get_serializer_class(self):
-        if self.action == 'retrieve':  # Если запрашиваем одного пользователя (/users/{id}/)
-            return UserDetailSerializer
-        return UserSerializer  # Во всех остальных случаях (список, создание и т.д.)
+        if self.action == 'retrieve':
+            # Получаем конкретного пользователя из URL
+            user = self.get_object()
+
+            # Проверяем тип пользователя
+            if user.is_staff:
+                return CoachDetailSerializer
+            else:
+                return AthleteDetailSerializer
+
+        # Для всех остальных случаев (list, и т.д.)
+        return UserSerializer
 
     filter_backends = [SearchFilter, OrderingFilter]  # Подключаем SearchFilter здесь
     search_fields = ['first_name', 'last_name']  # Указываем поля по которым будет вестись поиск
@@ -263,6 +273,24 @@ class AthleteInfoView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SubscribeToCoachView(APIView):
+    def post(self, request, id):
+        # 1. Получить тренера из URL
+        coach = get_object_or_404(User, id=id)
+
+        # 2. Подготовить данные для сериализатора
+        data = request.data.copy()  # Копируем тело запроса -> {'athlete': 123}
+        data['coach'] = coach.id  # Добавляем ID тренера
+
+        # 3. Валидация и создание
+        serializer = SubscribeSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'status': 'subscribed'}, status=200)
+
+        return Response(serializer.errors, status=400)
 
 
 class PositionViewSet(viewsets.ModelViewSet):

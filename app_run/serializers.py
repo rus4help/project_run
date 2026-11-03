@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
+from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem, Subscribe
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -110,10 +110,40 @@ class CollectibleItemSerializer(serializers.ModelSerializer):
         return value
 
 
-class UserDetailSerializer(UserSerializer):
+class AthleteDetailSerializer(UserSerializer):
     # Добавляем только то, чего нет в родительском классе
     items = CollectibleItemSerializer(many=True, read_only=True)
+    coach = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
         # Наследуем все поля от родителя и добавляем 'items'
-        fields = UserSerializer.Meta.fields + ['items']
+        fields = UserSerializer.Meta.fields + ['items', 'coach']
+
+    def get_coach(self, obj):
+        # Получить ID тренера из подписки
+        subscription = obj.subscribe_athlete.first()
+        return subscription.coach.id if subscription else None
+
+
+class CoachDetailSerializer(UserSerializer):
+    athletes = serializers.SerializerMethodField()  # Новое поле!
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ['athletes']
+
+    def get_athletes(self, obj):
+        # Получить список ID атлетов из подписок
+        return list(obj.subscribe_coach.values_list('athlete_id', flat=True))
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscribe
+        fields = ['athlete', 'coach']
+
+    def validate(self, data):
+        if not data['coach'].is_staff:
+            raise serializers.ValidationError("Coach must be a coach")
+        if data['athlete'].is_staff:
+            raise serializers.ValidationError("Athlete must be an athlete")
+        return data
