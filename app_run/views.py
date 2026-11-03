@@ -23,7 +23,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
-from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem
+from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem, Subscribe
 from django.contrib.auth.models import User
 from .serializers import (RunSerializer, UserSerializer, CoachDetailSerializer, AthleteDetailSerializer,
                           AthleteInfoSerializer,
