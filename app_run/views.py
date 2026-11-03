@@ -88,9 +88,10 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         elif user_type == 'athlete':
             queryset = queryset.filter(is_staff=False)
 
-        # Сразу считаем количество finished забегов для каждого юзера
+        # Сразу считаем количество finished забегов для каждого юзера и средний рейтинг в одном запросе
         queryset = queryset.annotate(
-            finished_runs_count=Count('run', filter=Q(run__status='finished'))
+            finished_runs_count=Count('run', filter=Q(run__status='finished')),
+            rating=Avg('subscribe_coach__rating')  # Средний рейтинг из подписок
         )
 
         return queryset

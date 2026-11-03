@@ -6,11 +6,12 @@ from .models import Run, AthleteInfo, Challenge, Position, CollectibleItem, Subs
 class UserSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()  # Тут мы задаем новое поле, которого нет в модели БД
     runs_finished = serializers.IntegerField(source='finished_runs_count', read_only=True)
+    rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = User
         fields = ['id', 'date_joined', 'username', 'first_name', 'last_name', 'type',
-                  'runs_finished']  # Здесь добавили данное поле type и runs_finished
+                  'runs_finished', 'rating']
 
     # Определяем метод, который вычисляет значение поля
     def get_type(self, obj):
