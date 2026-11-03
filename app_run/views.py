@@ -29,7 +29,7 @@ from .serializers import (RunSerializer, UserSerializer, CoachDetailSerializer, 
                           AthleteInfoSerializer,
                           ChallengeSerializer,
                           PositionSerializer, \
-                          CollectibleItemSerializer, )
+                          CollectibleItemSerializer, SubscribeSerializer)
 
 
 @api_view(['GET'])
