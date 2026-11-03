@@ -47,3 +47,11 @@ class CollectibleItem(models.Model):
     picture = models.URLField()
     value = models.IntegerField()
     collected_by = models.ManyToManyField(User, related_name='items', blank=True)
+
+
+class Subscribe(models.Model):
+    athlete = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribe_athlete')
+    coach = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribe_coach')
+
+    class Meta:
+        unique_together = ['athlete', 'coach']  # Комбинация полей 'athlete' и 'coach' должна быть уникальной
