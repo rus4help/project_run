@@ -156,3 +156,14 @@ class RateCoachSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscribe
         fields = ['athlete', 'rating']
+
+
+class AnalyticsForCoachSerializer(serializers.Serializer):
+    longest_run_user = serializers.IntegerField(allow_null=True)
+    longest_run_value = serializers.FloatField(allow_null=True)
+
+    total_run_user = serializers.IntegerField(allow_null=True)
+    total_run_value = serializers.FloatField(allow_null=True)
+
+    speed_avg_user = serializers.IntegerField(allow_null=True)
+    speed_avg_value = serializers.FloatField(allow_null=True)

@@ -29,7 +29,8 @@ from .serializers import (RunSerializer, UserSerializer, CoachDetailSerializer, 
                           AthleteInfoSerializer,
                           ChallengeSerializer,
                           PositionSerializer, \
-                          CollectibleItemSerializer, SubscribeSerializer, RateCoachSerializer)
+                          CollectibleItemSerializer, SubscribeSerializer, RateCoachSerializer,
+                          AnalyticsForCoachSerializer)
 
 
 @api_view(['GET'])
@@ -459,3 +460,37 @@ class RateCoachView(APIView):
         subscription.save()
 
         return Response({'status': 'rating updated'}, status=status.HTTP_200_OK)
+
+
+class AnalyticsForCoachView(APIView):
+    def get(self, request, coach_id):
+        # 1. Получаем ID всех атлетов, которые подписаны на этого тренера
+        athlete_ids = Subscribe.objects.filter(coach_id=coach_id).values_list('athlete_id', flat=True)
+
+        # 2. Фильтруем только завершенные забеги этих атлетов
+        runs = Run.objects.filter(athlete_id__in=athlete_ids, status='finished')
+
+        # 3. Самый длинный забег (один запрос)
+        longest_run = runs.order_by('-distance').first()
+
+        # 4. Суммарная дистанция по каждому атлету и берем топ-1 (один запрос)
+        total_run = runs.values('athlete').annotate(total_dist=Sum('distance')).order_by('-total_dist').first()
+
+        # 5. Средняя скорость по каждому атлету и берем топ-1 (один запрос)
+        speed_run = runs.values('athlete').annotate(avg_speed=Avg('speed')).order_by('-avg_speed').first()
+
+        # 6. Собираем данные для ответа (обрабатываем случай, если данных нет)
+        data = {
+            'longest_run_user': longest_run.athlete_id if longest_run else None,
+            'longest_run_value': longest_run.distance if longest_run else None,
+            'total_run_user': total_run['athlete'] if total_run else None,
+            'total_run_value': total_run['total_dist'] if total_run else None,
+            'speed_avg_user': speed_run['athlete'] if speed_run else None,
+            'speed_avg_value': speed_run['avg_speed'] if speed_run else None,
+        }
+
+        # Превращаем словарь в сериализованный объект
+        serializer = AnalyticsForCoachSerializer(data)
+
+        # Возвращаем serializer.data
+        return Response(serializer.data, status=status.HTTP_200_OK)
